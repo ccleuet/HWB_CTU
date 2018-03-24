@@ -29,20 +29,32 @@ disp('**** Add your code to complete the analysis here ****')
 
 keyHypo = (0:255);
 keyMat = repmat(keyHypo,numOfTraces,1);
-key_final=zeros(16,1)
+key_final=zeros(16,1);
 
 for i = 1:16
     
 ByteVector=inputs(:,i)';
 ByteMat = repmat(ByteVector,256,1)';
 CipherByteHypo=bitxor(keyMat,ByteMat);
-SubBytes(CipherByteHypo + 1);
-ByteCipherHW = byte_Hamming_weight(SubBytes(CipherByteHypo + 1) + 1);
+
+PowerConsumption = byte_Hamming_weight(SubBytes(CipherByteHypo + 1) + 1);
 
 %Pearson correlation
 
-ByteCorMat = corr(ByteCipherHW, traces);
+ByteCorMat = myCorrcoef(PowerConsumption, traces);
 highestCorCoef = max(ByteCorMat(:));
 [key, time] = find(ismember(ByteCorMat, highestCorCoef));
-key_final(i) = keyHypo(key)
+    if i==1
+        x=1:38000;
+        right_guess=ByteCorMat(key,1:38000);
+        wrong_guess_1=ByteCorMat(1,1:38000);
+        wrong_guess_2=ByteCorMat(8,1:38000);
+        plot(x,right_guess,x,wrong_guess_1,x,wrong_guess_2);
+        ylim([-1,1]);
+    end
+key_final(i) = keyHypo(key);
+end
+
+for i = 1:16
+    key_hexa=dec2hex(key_final(i))
 end
